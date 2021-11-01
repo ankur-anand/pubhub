@@ -16,14 +16,16 @@ type Client struct {
 	namespaces []string
 	grpcConn   *grpc.ClientConn
 	cancelCtx  context.CancelFunc
+	conditions []byte
 }
 
 // NewClient returns a new initialized client which connect to hub server,
 // for Pub Sub Mechanism.
-func NewClient(namespace []string, conn *grpc.ClientConn) *Client {
+func NewClient(namespace []string, conditions []byte, conn *grpc.ClientConn) *Client {
 	return &Client{
 		namespaces: namespace,
 		grpcConn:   conn,
+		conditions: conditions,
 	}
 }
 
@@ -41,7 +43,7 @@ func (c *Client) Subscribe(ctx context.Context, msgRcv chan<- *hub.KV) error {
 	client := hub.NewPubSubServiceClient(c.grpcConn)
 	subscribed, err := client.Subscribe(ctx, &hub.SubscriptionRequest{
 		Namespaces: c.namespaces,
-		Conditions: nil,
+		Conditions: c.conditions,
 	})
 	if err != nil {
 		return err

@@ -59,8 +59,16 @@ func (p *pubSub) Subscribe(request *hub.SubscriptionRequest, server hub.PubSubSe
 	if len(request.Namespaces) == 0 {
 		return status.Errorf(codes.InvalidArgument, "cannot subscribe to empty namespace")
 	}
+	var cs Conditions
+	if request.Conditions != nil {
+		cs = make(Conditions)
+		err := cs.UnmarshalJSON(request.Conditions)
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "invalid condition objects %v", err)
+		}
+	}
 
-	filterFunc := newNameSpaceFilterer(request)
+	filterFunc := newNameSpaceFilterer(cs, request)
 	streamer := p.pub.Subscribe(filterFunc)
 	p.hooker.SubHook(SubscriberCreate)
 	// block until downstream cancel this request.

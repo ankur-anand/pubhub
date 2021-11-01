@@ -17,9 +17,15 @@ type namespaceFilterFunc func(msg *hub.KV) bool
 
 // newNameSpaceFilterer returns a function that validates if the given msg should be
 // published to provided subscriber or not.
-func newNameSpaceFilterer(request *hub.SubscriptionRequest) namespaceFilterFunc {
+func newNameSpaceFilterer(condition Conditions, request *hub.SubscriptionRequest) namespaceFilterFunc {
 	return func(msg *hub.KV) bool {
 		for _, namespace := range request.Namespaces {
+			if condition != nil && !condition.Fulfills(&Request{
+				Key:      msg.Key,
+				Metadata: msg.Metadata,
+			}) {
+				return false
+			}
 			if strings.EqualFold(namespace, msg.Namespace) || namespace == "*" {
 				return true
 			}
