@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package v1.hub;
+option java_multiple_files = true;
+option java_package = "com.pubhub.v1.hub";
+option go_package = "github.com/ankur-anand/pubhub/proto/gen/v1/hub";
+
+
+// KV is an object message which get published by the client
+// and received by the downstream subscriber.
+message KV {
+  string namespace = 1;
+  string key = 2;
+  bytes value = 3;
+  map<string, string> metadata = 4;
+  int64 id = 5;
+}
+
+// SubscriptionRequest from client to hub to receive a key published inside namespaces.
+// Client Can also send conditions to filter these subscriptions.
+message SubscriptionRequest {
+  repeated string namespaces = 1;
+  // conditions can be further used to fulfill and filter this subscription
+  bytes conditions = 2;
+}
+
+message PublishResponse {
+}
+
+// PubSubService implements the Publish/Subscribe messaging paradigm.
+//
+// Publisher uses this service to publish while subscriber uses this service to create and receive
+// a subscription to a namespace from hub server.
+service PubSubService {
+  // Establishes a stream with the hub server for receiving KV messages.
+  rpc Subscribe(SubscriptionRequest) returns (stream KV);
+
+  // Publish a single message to the hub.
+  rpc Publish(KV) returns (PublishResponse);
+
+  // Publish a list of messages over a stream.
+  rpc PublishList(stream KV) returns (PublishResponse);
+}
+
