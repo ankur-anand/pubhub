@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ankur-anand/pubhub/proto/gen/v1/hub"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -57,13 +56,11 @@ type Hooker interface {
 	Duration(metadata HookMetadata, d time.Duration)
 }
 
-// pubSub Server implements Publish and Subscriber model over gRPC Stream.
+// pubSub Hub implements Publish and Subscriber model over gRPC Stream.
 type pubSub struct {
 	atomicClock int64
-
-	log    *zap.Logger
-	pub    *publisherChannel
-	hooker Hooker
+	pub         *publisherChannel
+	hooker      Hooker
 	// shutdown operations
 	shutdownCH   chan struct{}
 	shutdownLock sync.Mutex
@@ -72,7 +69,6 @@ type pubSub struct {
 }
 
 func (p *pubSub) Subscribe(request *hub.SubscriptionRequest, server hub.PubSubService_SubscribeServer) error {
-	p.log.Info("hub: new subscription request from downstream", zap.Strings("namespaces", request.Namespaces))
 
 	if len(request.Namespaces) == 0 {
 		return status.Errorf(codes.InvalidArgument, "cannot subscribe to empty namespace")
@@ -107,7 +103,6 @@ func (p *pubSub) Subscribe(request *hub.SubscriptionRequest, server hub.PubSubSe
 			err := server.Send(msg)
 			p.hooker.Duration(HookMetadata{DurationKind: Broadcast, Err: err}, time.Since(bs))
 			if err != nil {
-				p.log.Error("hub: error sending to subscriber stream", zap.Error(err))
 				return err
 			}
 		}
@@ -115,13 +110,11 @@ func (p *pubSub) Subscribe(request *hub.SubscriptionRequest, server hub.PubSubSe
 }
 
 func (p *pubSub) Publish(ctx context.Context, kv *hub.KV) (*hub.PublishResponse, error) {
-	p.log.Debug("hub: new message published")
 	p.broadcast(kv)
 	return emptyPubResponse, nil
 }
 
 func (p *pubSub) PublishList(server hub.PubSubService_PublishListServer) error {
-	p.log.Debug("hub: new stream publisherChannel")
 
 	for {
 		msg, err := server.Recv()
@@ -136,8 +129,6 @@ func (p *pubSub) PublishList(server hub.PubSubService_PublishListServer) error {
 				// client cancelled the request.
 				return nil
 			}
-
-			p.log.Error("hub: publish error on receive stream", zap.Error(err))
 			return err
 		}
 

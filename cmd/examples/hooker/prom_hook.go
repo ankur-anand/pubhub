@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"log"
 	"time"
 
 	"github.com/ankur-anand/pubhub/hub"
@@ -63,10 +64,12 @@ func (p PromHook) PubHook(msg *pbhub.KV) {
 
 func (p PromHook) SubHook(ops hub.SubscriberOPS) {
 	if ops == hub.SubscriberCreate {
+		log.Println("new client connected")
 		streamCounterMetric.WithLabelValues("subscription").Add(1)
 	}
 
 	if ops == hub.SubscriberDelete {
+		log.Println("client disconnected")
 		streamCounterMetric.WithLabelValues("subscription").Sub(1)
 	}
 }

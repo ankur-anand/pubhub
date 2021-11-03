@@ -10,7 +10,6 @@ import (
 
 	"github.com/ankur-anand/pubhub/hub"
 	pbhub "github.com/ankur-anand/pubhub/proto/gen/v1/hub"
-	"go.uber.org/zap/zaptest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )
@@ -56,7 +55,7 @@ func TestClientServer_Subscribe(t *testing.T) {
 		rcvCounter <- 1
 	}
 
-	server, err := hub.NewServer(gSrv, zaptest.NewLogger(t), mockedHook{funcCalled: hookFunc})
+	server, err := hub.NewHub(gSrv, hub.WithHooker(mockedHook{funcCalled: hookFunc}))
 	if err != nil {
 		t.Errorf("error creating new server %v", err)
 	}
@@ -218,7 +217,7 @@ func TestClientServer_Publish(t *testing.T) {
 		rcvCounter <- 1
 	}
 
-	server, err := hub.NewServer(gSrv, zaptest.NewLogger(t), mockedHook{funcCalled: hookFunc})
+	server, err := hub.NewHub(gSrv, hub.WithHooker(mockedHook{funcCalled: hookFunc}))
 	if err != nil {
 		t.Errorf("error creating new server %v", err)
 	}
@@ -382,7 +381,7 @@ func TestClientServer_PublishList(t *testing.T) {
 		rcvCounter <- 1
 	}
 
-	server, err := hub.NewServer(gSrv, zaptest.NewLogger(t), mockedHook{funcCalled: hookFunc})
+	server, err := hub.NewHub(gSrv, hub.WithHooker(mockedHook{funcCalled: hookFunc}))
 	if err != nil {
 		t.Errorf("error creating new server %v", err)
 	}
@@ -546,7 +545,7 @@ func TestClientServer_Subscribe_Conditional(t *testing.T) {
 		rcvCounter <- 1
 	}
 
-	server, err := hub.NewServer(gSrv, zaptest.NewLogger(t), mockedHook{funcCalled: hookFunc})
+	server, err := hub.NewHub(gSrv, hub.WithHooker(mockedHook{funcCalled: hookFunc}))
 	if err != nil {
 		t.Errorf("error creating new server %v", err)
 	}
