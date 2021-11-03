@@ -37,6 +37,9 @@ type mockedHook struct {
 	funcCalled func()
 }
 
+func (m mockedHook) Duration(metadata hub.HookMetadata, d time.Duration) {
+}
+
 func (m mockedHook) PubHook(msg *pbhub.KV) {
 	m.funcCalled()
 }

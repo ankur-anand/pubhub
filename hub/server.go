@@ -17,6 +17,9 @@ const (
 type NoopHook struct {
 }
 
+func (n NoopHook) Duration(metadata HookMetadata, d time.Duration) {
+}
+
 func (n NoopHook) PubHook(msg *hub.KV) {
 }
 

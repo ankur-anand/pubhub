@@ -32,11 +32,29 @@ const (
 	SubscriberDelete SubscriberOPS = 1
 )
 
+// DurationKind represents what kind of duration has been sent.
+type DurationKind int
+
+// HookMetadata contains some embedded information for the hook.
+type HookMetadata struct {
+	DurationKind
+	// if this was error
+	Err error
+}
+
+const (
+	// Broadcast duration
+	Broadcast DurationKind = iota
+	// Stream duration is overall stream duration
+	Stream
+)
+
 // Hooker implementation provides hook methods that gets called during
 // the pub and sub operations.
 type Hooker interface {
 	PubHook(msg *hub.KV)
 	SubHook(ops SubscriberOPS)
+	Duration(metadata HookMetadata, d time.Duration)
 }
 
 // pubSub Server implements Publish and Subscriber model over gRPC Stream.
@@ -74,7 +92,8 @@ func (p *pubSub) Subscribe(request *hub.SubscriptionRequest, server hub.PubSubSe
 	// block until downstream cancel this request.
 	defer p.pub.Evict(streamer)
 	defer p.hooker.SubHook(SubscriberDelete)
-
+	start := time.Now()
+	defer p.hooker.Duration(HookMetadata{Err: nil, DurationKind: Stream}, time.Since(start))
 	ctx := server.Context()
 	for {
 		select {
@@ -84,7 +103,9 @@ func (p *pubSub) Subscribe(request *hub.SubscriptionRequest, server hub.PubSubSe
 			// server shutting down
 			return nil
 		case msg := <-streamer:
+			bs := time.Now()
 			err := server.Send(msg)
+			p.hooker.Duration(HookMetadata{DurationKind: Broadcast, Err: err}, time.Since(bs))
 			if err != nil {
 				p.log.Error("hub: error sending to subscriber stream", zap.Error(err))
 				return err
