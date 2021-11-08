@@ -150,6 +150,7 @@ func (h *hubServer) startServers(ctx context.Context) error {
 func (h *hubServer) StopServer(ctx context.Context) error {
 	doneCh := make(chan struct{})
 	go func() {
+		h.hub.Close()
 		h.cmux.Close()
 		h.rpcServer.GracefulStop()
 		err := h.httpSrv.Shutdown(ctx)
