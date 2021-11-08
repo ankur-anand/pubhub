@@ -1,3 +1,3 @@
 ## PubHub
 
-WIP
+Pub Sub over a grpc streams. WIP
